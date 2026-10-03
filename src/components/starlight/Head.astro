@@ -1,5 +1,7 @@
 ---
 import DefaultHead from '@astrojs/starlight/components/Head.astro';
+import { markdownPath } from '../../lib/markdown';
 ---
 
 <DefaultHead />
+<link rel="alternate" type="text/markdown" href={markdownPath(Astro.url.pathname)} />

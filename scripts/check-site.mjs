@@ -158,9 +158,58 @@ assert.equal((announcements.match(/<item>/g) ?? []).length, 12, 'RSS feed must c
 assert.equal((announcements.match(/https:\/\/projectucore\.org\/announcements\//g) ?? []).length, 24, 'RSS items must link to production announcement URLs.');
 assert(announcements.includes('2024-11-12-fedora-41') && announcements.includes('2024-11-12-kernel-hold'), 'Both same-day 2024 announcements must be present.');
 
+function markdownRoute(route) {
+	const trimmed = route.replace(/\/+$/, '');
+	return trimmed ? `${trimmed}.md` : '/index.md';
+}
+
+const contentPages = pages.filter((file) => path.basename(file) === 'index.html');
+const markdownFiles = walk(output).filter((file) => file.endsWith('.md'));
+assert.equal(markdownFiles.length, contentPages.length, `Expected one Markdown copy per page (${contentPages.length}); got ${markdownFiles.length}.`);
+const headers = readFileSync(assertExists('_headers'), 'utf8');
+const headerRules = headers.split(/\n(?=\S)/).filter((rule) => rule.trim());
+assert(headerRules.length <= 100, `_headers has ${headerRules.length} rules; Cloudflare Pages allows 100.`);
+for (const file of contentPages) {
+	const relative = path.relative(output, file).split(path.sep).join('/');
+	const route = `/${relative.slice(0, -'index.html'.length)}`;
+	const markdownUrl = markdownRoute(route);
+	const html = readFileSync(file, 'utf8');
+	const alternates = [...html.matchAll(/<link\b[^>]*\brel=["']alternate["'][^>]*\btype=["']text\/markdown["'][^>]*>/gi)];
+	assert.equal(alternates.length, 1, `${relative} should have one Markdown alternate link.`);
+	assert.deepEqual(htmlAttributes(alternates[0][0], 'href'), [markdownUrl], `${relative} links the wrong Markdown copy.`);
+	const markdown = readFileSync(assertExists(markdownUrl.slice(1)), 'utf8');
+	assert(markdown.startsWith(`---\ntitle: `) && markdown.includes(`\nurl: "https://projectucore.org${route}"\n---\n`), `${markdownUrl} has unexpected front matter.`);
+	assert(/^# \S/m.test(markdown), `${markdownUrl} has no H1.`);
+	assert(!/<\/?(?:div|span|button|aside|nav|details|summary)\b|\bCOPY\b|Copy as Markdown|View as Markdown|^\$ /m.test(markdown), `${markdownUrl} contains page chrome or component markup.`);
+	assert(headers.includes(`\n${route}\n  Link: <${markdownUrl}>; rel="alternate"; type="text/markdown"`), `_headers lacks the Markdown alternate for ${route}.`);
+	assert(headers.includes(`\n${markdownUrl}\n  Link: <https://projectucore.org${route}>; rel="canonical"`), `_headers lacks the canonical link for ${markdownUrl}.`);
+}
+assert(!readFileSync(path.join(output, '404.html'), 'utf8').includes('text/markdown'), '404 should not advertise a Markdown copy.');
+assert(readFileSync(path.join(output, 'docs/zfs.md'), 'utf8').includes('```sh\necho zfs | sudo tee /etc/modules-load.d/zfs.conf\n```'), 'docs/zfs.md lost its shell code block.');
+const homeMarkdown = readFileSync(path.join(output, 'index.md'), 'utf8');
+for (const imageRef of imageRefs) assert(homeMarkdown.includes(`\`${imageRef}\``), `index.md is missing image reference ${imageRef}.`);
+
+const llms = readFileSync(assertExists('llms.txt'), 'utf8');
+for (const [rel, href] of [['llms-txt', '/llms.txt'], ['llms-full-txt', '/llms-full.txt']]) {
+	assert(new RegExp(`<link\\b[^>]*\\brel=["']${rel}["'][^>]*\\bhref=["']${href}["']`).test(home), `Homepage is missing <link rel="${rel}">.`);
+}
+assert(llms.startsWith('# uCore\n\n> '), 'llms.txt must start with an H1 and a summary blockquote.');
+assert(/^## Optional$/m.test(llms), 'llms.txt is missing its Optional section.');
+const llmsLinks = [...llms.matchAll(/\]\((https:\/\/projectucore\.org\/[^)\s]+\.md)\)/g)].map((match) => new URL(match[1]).pathname);
+assert.equal(new Set(llmsLinks).size, contentPages.length, `llms.txt should link every Markdown page once; got ${llmsLinks.length}.`);
+for (const link of llmsLinks) assertExists(link.slice(1));
+const llmsFull = readFileSync(assertExists('llms-full.txt'), 'utf8');
+for (const [name, text] of [['llms.txt', llms], ['llms-full.txt', llmsFull]]) {
+	assert(text.includes('](https://github.com/ublue-os/ucore)'), `${name} must link the upstream ublue-os/ucore repository.`);
+}
+for (const link of llmsLinks) {
+	const route = link === '/index.md' ? '/' : `${link.slice(0, -'.md'.length)}/`;
+	assert(llmsFull.includes(`\nSource: https://projectucore.org${route}\n`), `llms-full.txt is missing ${link}.`);
+}
+
 const searchFiles = walk(path.join(output, 'pagefind'));
 assert(searchFiles.some((file) => file.endsWith('.pf_meta')), 'Pagefind metadata index is missing.');
 const article = readFileSync(path.join(output, 'announcements/2026-08-18-image-upgrade-recovery/index.html'), 'utf8');
 assert(article.includes('Manual recovery for failed image upgrades'), 'Announcement detail page is missing its title.');
 
-console.log(`PASS: ${pages.length} pages, ${imageRefs.size} image references, 12 RSS items, local links/anchors, sitemap and Pagefind output${fixture ? ' (reduced picker fixture)' : ''}.`);
+console.log(`PASS: ${pages.length} pages, ${markdownFiles.length} Markdown copies, llms.txt, _headers, ${imageRefs.size} image references, 12 RSS items, local links/anchors, sitemap and Pagefind output${fixture ? ' (reduced picker fixture)' : ''}.`);

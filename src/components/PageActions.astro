@@ -1,0 +1,10 @@
+---
+import { markdownPath } from '../lib/markdown';
+
+const markdown = markdownPath(Astro.url.pathname);
+---
+
+<div class="page-actions" data-page-actions data-pagefind-ignore>
+	<a class="page-action" href={markdown}>View as Markdown</a>
+	<button class="page-action" type="button" data-copy-markdown={markdown}>Copy as Markdown</button>
+</div>

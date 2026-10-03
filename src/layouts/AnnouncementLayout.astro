@@ -1,6 +1,7 @@
 ---
 import Base from './Base.astro';
 import Note from '../components/Note.astro';
+import PageActions from '../components/PageActions.astro';
 import { formatAnnouncementDate, type Announcement } from '../lib/announcements';
 
 interface Props {
@@ -15,6 +16,7 @@ const { item } = Astro.props;
 		<p class="breadcrumb"><a href="/announcements/">Announcements</a></p>
 		<h1>{item.data.title}</h1>
 		<p class="date"><time datetime={item.data.date}>{formatAnnouncementDate(item.data.date)}</time></p>
+		<PageActions />
 		{item.data.historical && <Note><strong>A note from the project's history.</strong> This entry describes the project at publication. For a new system, use the <a href="/docs/first-install/">current installation guide</a>.</Note>}
 		<div class="article-body"><slot /></div>
 		<p class="source-note">Adapted from the <a href={item.data.source}>dated uCore README entry</a>. Source checked {formatAnnouncementDate(item.data.sourceCheckedAt)}. Publication date preserved.</p>

@@ -2,3 +2,5 @@ User-agent: *
 Allow: /
 
 Sitemap: https://projectucore.org/sitemap-index.xml
+
+# Index of Markdown copies for language models: https://projectucore.org/llms.txt

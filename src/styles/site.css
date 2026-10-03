@@ -976,6 +976,22 @@ html:not(.js) .copy {
 	margin-top: 16px;
 }
 
+.page-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-top: 18px;
+}
+
+.page-action {
+	text-decoration: none;
+	cursor: pointer;
+}
+
+html:not(.js) [data-copy-markdown] {
+	display: none;
+}
+
 .article .note {
 	margin-top: 28px;
 }
@@ -1104,7 +1120,8 @@ html.js ucore-search {
 	display: inline-flex;
 }
 
-.search-trigger {
+.search-trigger,
+.page-action {
 	display: inline-flex;
 	align-items: center;
 	gap: 7px;
@@ -1119,7 +1136,8 @@ html.js ucore-search {
 	letter-spacing: 0.04em;
 }
 
-.search-trigger:hover {
+.search-trigger:hover,
+.page-action:hover {
 	border-color: var(--edge2);
 	color: var(--ink);
 }

@@ -46,6 +46,27 @@ const links = [
 	document.addEventListener('click', async (event) => {
 		const target = event.target;
 		if (!(target instanceof Element)) return;
+		const markdownButton = target.closest<HTMLButtonElement>('[data-copy-markdown]');
+		if (markdownButton) {
+			const url = markdownButton.dataset.copyMarkdown ?? '';
+			const status = document.getElementById('copy-status');
+			const label = markdownButton.textContent;
+			try {
+				// Hand the clipboard a pending blob so Safari keeps the click as the user gesture.
+				const blob = (async () => {
+					const response = await fetch(url);
+					if (!response.ok) throw new Error(`HTTP ${response.status}`);
+					return new Blob([await response.text()], { type: 'text/plain' });
+				})();
+				await navigator.clipboard.write([new ClipboardItem({ 'text/plain': blob })]);
+				markdownButton.textContent = 'Copied';
+				if (status) status.textContent = 'Markdown copied to clipboard.';
+				window.setTimeout(() => { markdownButton.textContent = label; }, 1800);
+			} catch {
+				location.href = url;
+			}
+			return;
+		}
 		const button = target.closest<HTMLButtonElement>('[data-copy]');
 		if (!button) return;
 		const scope = button.closest('[data-copy-scope]');

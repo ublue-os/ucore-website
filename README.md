@@ -39,6 +39,10 @@ The image picker is maintained in `src/data/picker.json`. Its 27 full image refe
 
 The site adapts user-facing documentation from [ublue-os/ucore](https://github.com/ublue-os/ucore), licensed under Apache-2.0. Image definitions live in [`ucore/`](https://github.com/ublue-os/ucore/tree/main/ucore); build and release behavior is defined by the [Justfile](https://github.com/ublue-os/ucore/blob/main/ucore/Justfile) and [GitHub workflows](https://github.com/ublue-os/ucore/tree/main/.github/workflows). Site citations pin the source revision checked for each page. Review and refresh user-facing docs when those sources change.
 
+## Markdown for agents
+
+After the build, `src/integrations/markdown.ts` converts each page's final HTML into a Markdown copy next to it (`/docs/zfs/` → `/docs/zfs.md`, `/` → `/index.md`). It also writes `llms-full.txt` and a Cloudflare Pages `_headers` file with `Link` headers: each page points to its Markdown copy, and each copy points back to its canonical HTML page. `llms.txt` comes from `src/pages/llms.txt.ts`. Its intro, `src/llms-intro.md`, is written by hand; its sections follow the docs sidebar in `src/lib/docs-sidebar.ts`. The `rel="llms-txt"` relation is a convention, not a registered link type. When adding a component that renders interactive or decorative markup, check its Markdown output and extend the clean-up rules in the integration if needed.
+
 ## Hosting
 
 Cloudflare Pages is configured through project settings and Git integration. Set the custom domain to `projectucore.org`; hostname redirects, if needed, are managed there. The site canonical origin is `https://projectucore.org`.

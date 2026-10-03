@@ -10,6 +10,10 @@ import LinkCards from '../components/LinkCards.astro';
 	title="Uneventful by design"
 	description="uCore is an opinionated, container-first, storage and virtualization ready server OS base layer."
 >
+	<Fragment slot="head">
+		<link rel="llms-txt" type="text/plain" href="/llms.txt" />
+		<link rel="llms-full-txt" type="text/plain" href="/llms-full.txt" />
+	</Fragment>
 	<section class="hero-section" aria-labelledby="home-title">
 		<div class="hero-copy">
 			<p class="eyebrow">THE OS BASE LAYER</p>
