@@ -17,7 +17,11 @@ const { item } = Astro.props;
 		<p class="date"><time datetime={item.data.date}>{formatAnnouncementDate(item.data.date)}</time></p>
 		{item.data.historical && <Note><strong>A note from the project's history.</strong> This entry describes the project at publication. For a new system, use the <a href="/docs/first-install/">current installation guide</a>.</Note>}
 		<div class="article-body"><slot /></div>
-		<p class="source-note">Adapted from the <a href={item.data.source}>dated uCore README entry</a>. Source checked {formatAnnouncementDate(item.data.sourceCheckedAt)}. Publication date preserved.</p>
+		{item.data.sources ? (
+			<p class="source-note">Sources: {item.data.sources.map((source, index) => <>{index > 0 && (index === item.data.sources!.length - 1 ? ' and ' : ', ')}<a href={source.url}>{source.label}</a></>)}. Checked {formatAnnouncementDate(item.data.sourceCheckedAt)}.</p>
+		) : (
+			<p class="source-note">Adapted from the <a href={item.data.source}>dated uCore README entry</a>. Source checked {formatAnnouncementDate(item.data.sourceCheckedAt)}. Publication date preserved.</p>
+		)}
 		<p class="backlink"><a href="/announcements/">All announcements</a></p>
 	</article>
 </Base>
