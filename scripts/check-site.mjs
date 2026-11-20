@@ -54,6 +54,7 @@ const docs = [
 	'containers', 'services', 'selinux', 'distrobox', 'zfs', 'nas', 'nvidia', 'diy',
 ];
 const slugs = [
+	'2026-11-20-fedora-45',
 	'2026-08-18-image-upgrade-recovery', '2026-07-20-build-transparency', '2026-05-23-fedora-44',
 	'2026-01-08-lts-sysext', '2025-12-10-nvidia-variants', '2025-11-20-fedora-43',
 	'2025-11-08-arm64', '2025-06-12-build-streamlining', '2025-05-14-fedora-42',
@@ -154,13 +155,21 @@ for (const target of ['docs/first-install/index.html', 'docs/secure-boot/index.h
 }
 
 const announcements = readFileSync(path.join(output, 'feed.xml'), 'utf8');
-assert.equal((announcements.match(/<item>/g) ?? []).length, 12, 'RSS feed must contain all 12 announcements.');
-assert.equal((announcements.match(/https:\/\/projectucore\.org\/announcements\//g) ?? []).length, 24, 'RSS items must link to production announcement URLs.');
+assert.equal((announcements.match(/<item>/g) ?? []).length, slugs.length, 'RSS feed must contain all announcements.');
+assert.equal((announcements.match(/https:\/\/projectucore\.org\/announcements\//g) ?? []).length, slugs.length * 2, 'RSS items must link to production announcement URLs.');
 assert(announcements.includes('2024-11-12-fedora-41') && announcements.includes('2024-11-12-kernel-hold'), 'Both same-day 2024 announcements must be present.');
+assert(announcements.indexOf(slugs[0]) < announcements.indexOf(slugs[1]), 'The latest announcement must appear first in the feed.');
+const announcementIndex = readFileSync(path.join(output, 'announcements/index.html'), 'utf8');
+assert(announcementIndex.indexOf(slugs[0]) < announcementIndex.indexOf(slugs[1]), 'The latest announcement must appear first on the index.');
+const fedora45 = readFileSync(path.join(output, `announcements/${slugs[0]}/index.html`), 'utf8');
+assert(fedora45.includes('releases/tag/stable-20261120') && fedora45.includes('releases/tag/lts-20261120'), 'The Fedora 45 announcement must cite both releases.');
+assert(!fedora45.includes('dated uCore README entry'), 'The Fedora 45 announcement must not cite a README entry.');
+const fedora44 = readFileSync(path.join(output, 'announcements/2026-05-23-fedora-44/index.html'), 'utf8');
+assert(fedora44.includes('dated uCore README entry') && fedora44.includes('Publication date preserved.'), 'Historical announcement source wording must be preserved.');
 
 const searchFiles = walk(path.join(output, 'pagefind'));
 assert(searchFiles.some((file) => file.endsWith('.pf_meta')), 'Pagefind metadata index is missing.');
 const article = readFileSync(path.join(output, 'announcements/2026-08-18-image-upgrade-recovery/index.html'), 'utf8');
 assert(article.includes('Manual recovery for failed image upgrades'), 'Announcement detail page is missing its title.');
 
-console.log(`PASS: ${pages.length} pages, ${imageRefs.size} image references, 12 RSS items, local links/anchors, sitemap and Pagefind output${fixture ? ' (reduced picker fixture)' : ''}.`);
+console.log(`PASS: ${pages.length} pages, ${imageRefs.size} image references, ${slugs.length} RSS items, local links/anchors, sitemap and Pagefind output${fixture ? ' (reduced picker fixture)' : ''}.`);
